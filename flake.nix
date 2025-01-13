@@ -86,7 +86,7 @@
 
         # packages
         packages = {
-          terraform-provider-nix-sinagure = pkgs.callPackage ./package.nix {};
+          terraform-provider-nix-signature = pkgs.callPackage ./package.nix {};
         };
 
         # devshells
