@@ -42,6 +42,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     systems.url = "github:nix-systems/default";
+    flake-compat = {
+      url = "github:nix-community/flake-compat";
+      flake = false;
+    };
   };
 
   outputs = inputs @ {
