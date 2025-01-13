@@ -1,0 +1,43 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: "Release"
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write # Needed for creating releases
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install nix
+        uses: cachix/install-nix-action@08dcb3a5e62fa31e2da3d490afc4176ef55ecd72 # v30
+
+      - name: Setup nix magic cache
+        uses: DeterminateSystems/magic-nix-cache-action@87b14cf437d03d37989d87f0fa5ce4f5dc1a330b # v8
+        with:
+          diagnostic-endpoint: ""
+          use-flakehub: false
+
+      - name: Use direnv
+        uses: aldoborrero/direnv-nix-action@6f1d68ccf8d5477a1954e10464d169112d17dcd6 # v2
+        with:
+          use_nix_profile: true
+          nix_channel: nixpkgs
+
+      - name: Run GoReleaser
+        run: goreleaser release --clean
+        env:
+          KEY: ${{ secrets.COSIGN_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

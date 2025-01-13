@@ -1,0 +1,93 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: "CI"
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths-ignore:
+      - "README.md"
+  push:
+    branches: ["main"]
+    paths-ignore:
+      - "README.md"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: cachix/install-nix-action@08dcb3a5e62fa31e2da3d490afc4176ef55ecd72 # v30
+
+      - name: Setup nix magic cache
+        uses: DeterminateSystems/magic-nix-cache-action@87b14cf437d03d37989d87f0fa5ce4f5dc1a330b # v8
+        with:
+          diagnostic-endpoint: ""
+          use-flakehub: false
+
+      - name: Use direnv
+        uses: aldoborrero/direnv-nix-action@6f1d68ccf8d5477a1954e10464d169112d17dcd6 # v2
+        with:
+          use_nix_profile: true
+          nix_channel: nixpkgs
+
+      - name: Build plugin binary
+        run: go build -v .
+
+      - name: Run go unit tests
+        run: go test -v -race -count=1 ./...
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install nix
+        uses: cachix/install-nix-action@08dcb3a5e62fa31e2da3d490afc4176ef55ecd72 # v30
+
+      - name: Setup nix magic cache
+        uses: DeterminateSystems/magic-nix-cache-action@87b14cf437d03d37989d87f0fa5ce4f5dc1a330b # v8
+        with:
+          diagnostic-endpoint: ""
+          use-flakehub: false
+
+      - name: Use direnv
+        uses: aldoborrero/direnv-nix-action@6f1d68ccf8d5477a1954e10464d169112d17dcd6 # v2
+        with:
+          use_nix_profile: true
+          nix_channel: nixpkgs
+
+      - name: Check flake
+        run: nix flake check
+
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install nix
+        uses: cachix/install-nix-action@08dcb3a5e62fa31e2da3d490afc4176ef55ecd72 # v30
+
+      - name: Setup nix magic cache
+        uses: DeterminateSystems/magic-nix-cache-action@87b14cf437d03d37989d87f0fa5ce4f5dc1a330b # v8
+        with:
+          diagnostic-endpoint: ""
+          use-flakehub: false
+
+      - name: Use direnv
+        uses: aldoborrero/direnv-nix-action@6f1d68ccf8d5477a1954e10464d169112d17dcd6 # v2
+        with:
+          use_nix_profile: true
+          nix_channel: nixpkgs
+
+      - name: Generate terraform docs
+        run: docs
+
+      - name: git diff
+        run: |
+          nix develop --command git diff --compact-summary --exit-code || \
+            (echo; echo "Unexpected difference in directories after code generation. Run 'docs' command and commit."; exit 1)
