@@ -87,6 +87,10 @@
         # packages
         packages = {
           terraform-provider-nix-signature = pkgs.callPackage ./package.nix {};
+          opentofu-provider-nix-signature = pkgs.callPackage ./package.nix {
+            homepage = "https://registry.opentofu.org/aldoborrero/nix-signature";
+            provider-source-address = "registry.opentofu.org/aldoborrero/nix-signature";
+          };
         };
 
         # devshells
